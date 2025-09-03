@@ -2,10 +2,10 @@ from pyspark.sql import SparkSession,Window
 from pyspark.sql.functions import col,dense_rank,when,rank
 
 spark=SparkSession.builder.appName("PagilaSpark")\
-    .master("spark://master:7077")\
-    .config("spark.jars", "/opt/spark/jars/postgresql-42.7.3.jar")\
+    .master("spark://localhost:7077")\
+    .config("spark.jars", "jars/postgresql-42.7.3.jar")\
     .getOrCreate()
-jdbc_url = "jdbc:postgresql://pagila:5432/postgres"
+jdbc_url = "jdbc:postgresql://localhost:5432/postgres"
 pg_properties = {"user": "postgres", "password": "123456", "driver": "org.postgresql.Driver"}
 
 
@@ -99,4 +99,5 @@ ranked=city_category_max_time.groupby("city_type","category").sum("sum(time)")\
                              .filter((col("rank")==1) & ((col("city_type")=="A") | (col("city_type")=="-")))\
                              .select("city_type","category",((col("total_time")/60/60/24).cast("int")).alias("total_time"))
 ranked.show()
+
 
