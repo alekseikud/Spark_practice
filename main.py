@@ -70,11 +70,11 @@ task_5_result = actor.join(other=film_count,on="actor_id",how="left")\
                      .filter(col("rank")<=3)
 task_5_result.show(task_5_result.count())
 
-task_5_result=customer.select("active","address_id").join(other=address,on="address_id",how="inner")\
+task_6_result=customer.select("active","address_id").join(other=address,on="address_id",how="inner")\
                       .withColumn("inactive", 1 - col("active"))
-task_5_result=task_5_result.join(other=city,on="city_id",how="inner").orderBy(col("inactive").desc())\
+task_6_result=task_6_result.join(other=city,on="city_id",how="inner").orderBy(col("inactive").desc())\
                            .select("city","active","inactive").distinct()
-task_5_result.show()
+task_6_result.show()
 
 film_time = rental.join(other=inventory,on="inventory_id",how="inner")\
                 .join(other=film_category,on="film_id",how="inner")\
@@ -93,10 +93,38 @@ city_category_max_time = city_category_time.withColumn("city_type",when(col("cit
                                                        .when(col("city").contains("-"),"-")\
                                                        .otherwise(None))
 window2=Window.orderBy(col("total_time").desc()).partitionBy("city_type")
-ranked=city_category_max_time.groupby("city_type","category").sum("sum(time)")\
+task_7_result=city_category_max_time.groupby("city_type","category").sum("sum(time)")\
                              .withColumnRenamed("sum(sum(time))","total_time")\
                              .withColumn("rank",rank().over(window2))\
                              .filter((col("rank")==1) & ((col("city_type")=="A") | (col("city_type")=="-")))\
                              .select("city_type","category",((col("total_time")/60/60/24).cast("int")).alias("total_time"))
-ranked.show()
+task_7_result.show()
 
+
+task_1_result.cache()
+print("\n\n\n\nCount:", task_1_result.count())
+task_1_result.write.mode("overwrite").option("header", "true").csv("task_output/task_1_result.csv")
+
+task_2_result.cache()
+print("\n\n\n\nCount:", task_2_result.count())
+task_2_result.write.mode("overwrite").option("header", "true").csv("task_output/task_2_result.csv")
+
+task_3_result.cache()
+print("\n\n\n\nCount:", task_3_result.count())
+task_3_result.write.mode("overwrite").option("header", "true").csv("task_output/task_3_result.csv")
+
+task_4_result.cache()
+print("\n\n\n\nCount:", task_4_result.count())
+task_4_result.write.mode("overwrite").option("header", "true").csv("task_output/task_4_result.csv")
+
+task_5_result.cache()
+print("\n\n\n\nCount:", task_5_result.count())
+task_5_result.write.mode("overwrite").option("header", "true").csv("task_output/task_5_result.csv")
+
+task_6_result.cache()
+print("\n\n\n\nCount:", task_6_result.count())
+task_6_result.write.mode("overwrite").option("header", "true").csv("task_output/task_6_result.csv")
+
+task_7_result.cache()
+print("\n\n\n\nCount:", task_7_result.count())
+task_7_result.write.mode("overwrite").option("header", "true").csv("task_output/task_7_result.csv")

@@ -8,6 +8,7 @@ services:
       - SPARK_EVENTLOG_DIR=/tmp/spark-events
     volumes:
       - ./logs:/tmp/spark-events
+      - ./task_output:/opt/bitnami/spark/task_output
     depends_on:
       - pagila
     ports:
@@ -28,6 +29,8 @@ services:
       - SPARK_MASTER_URL=spark://master:7077
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=2G
+    volumes:
+      - ./task_output:/opt/bitnami/spark/task_output
     networks:
       sparknet:
     depends_on:
@@ -40,6 +43,8 @@ services:
       - SPARK_MASTER_URL=spark://master:7077
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=2G
+    volumes:
+      - ./task_output:/opt/bitnami/spark/task_output
     networks:
       sparknet:
     depends_on:
@@ -52,6 +57,8 @@ services:
       - SPARK_MASTER_URL=spark://master:7077
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=2G
+    volumes:
+      - ./task_output:/opt/bitnami/spark/task_output
     networks:
       sparknet:
     depends_on:
@@ -101,6 +108,7 @@ services:
       - worker_3
     volumes:
       - ./jars:/opt/spark/jars
+      - ./task_output:/opt/bitnami/spark/task_output
       - ./main.py:/opt/spark-apps/main.py
     networks:
       - sparknet
