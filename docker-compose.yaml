@@ -1,0 +1,118 @@
+services:
+  master:
+    image: bitnami/spark:4.0
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_EVENTLOG_ENABLED=true
+      - SPARK_EVENTLOG_DIR=/tmp/spark-events
+    volumes:
+      - ./logs:/tmp/spark-events
+    depends_on:
+      - pagila
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    networks:
+      sparknet:
+    healthcheck:
+      test: ["CMD","curl","-f","localhost:8080"]
+      retries: 5
+      timeout: 15s
+
+
+  worker_1:
+    image: bitnami/spark:4.0
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+    networks:
+      sparknet:
+    depends_on:
+      - master
+
+  worker_2:
+    image: bitnami/spark:4.0
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+    networks:
+      sparknet:
+    depends_on:
+      - master
+
+  worker_3:
+    image: bitnami/spark:4.0
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+    networks:
+      sparknet:
+    depends_on:
+      - master
+  pagila:
+    image: postgres:17
+    container_name: pagila
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_USER: postgres
+    volumes:
+      - ./pagila-schema.sql:/docker-entrypoint-initdb.d/1-pagila-schema.sql
+      - ./pagila-schema-jsonb.sql:/docker-entrypoint-initdb.d/1-pagila-schema-jsonb.sql
+      - ./pagila-data.sql:/docker-entrypoint-initdb.d/2-pagila-data.sql
+      - ./restore-pagila-data-jsonb.sh:/docker-entrypoint-initdb.d/3-restore-pagila-data-jsonb.sh
+      - ./pagila-data-yum-jsonb.backup:/docker-entrypoint-initdb.d/pagila-data-yum-jsonb.backup
+      - ./pagila-data-apt-jsonb.backup:/docker-entrypoint-initdb.d/pagila-data-apt-jsonb.backup
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      sparknet:
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+  pgadmin:
+    container_name: pgadmin4
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    volumes:
+      - "./pgadmin/pgadmin_servers.json:/pgadmin4/servers.json"
+      - "./pgadmin/pgadmin_pass:/pgadmin4/pass"
+    ports:
+      - "5050:80"
+    networks:
+      sparknet:
+
+  pyspark-client:
+    image: bitnami/spark:4.0
+    depends_on:
+      - master
+      - pagila
+      - worker_1
+      - worker_2
+      - worker_3
+    volumes:
+      - ./jars:/opt/spark/jars
+      - ./main.py:/opt/spark-apps/main.py
+    networks:
+      - sparknet
+    command: [
+      "bin/spark-submit",
+      "--master", "spark://master:7077",
+      "--jars", "/opt/spark/jars/postgresql-42.7.3.jar",
+      "/opt/spark-apps/main.py"
+    ]
+
+volumes:
+  pgdata:
+
+networks:
+  sparknet:
