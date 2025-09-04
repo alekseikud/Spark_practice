@@ -101,6 +101,7 @@ services:
       - worker_3
     volumes:
       - ./jars:/opt/spark/jars
+      - ./task_output:/opt/bitnami/spark/task_output
       - ./main.py:/opt/spark-apps/main.py
     networks:
       - sparknet
